@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Daily Planner</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 720px;
+      margin: auto;
+      padding: 30px;
+    }
+
+    form, #filters, #taskContainer, #search {
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      margin-right: 10px;
+      padding: 8px;
+    }
+
+    .task {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .tag {
+      padding: 2px 6px;
+      margin-left: 6px;
+      border-radius: 3px;
+      color: white;
+      font-size: 12px;
+    }
+
+    .work { background-color: #0077cc; }
+    .personal { background-color: #00aa55; }
+    .low { background-color: #888; }
+    .medium { background-color: #e0a800; }
+    .high { background-color: #d63333; }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      display: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <h2>Smart Daily Planner</h2>
+
+  <form id="taskForm">
+    <input type="text" id="taskName" placeholder="Task name" required />
+    <select id="category" required>
+      <option value="">Category</option>
+      <option value="work">Work</option>
+      <option value="personal">Personal</option>
+    </select>
+    <select id="priority" required>
+      <option value="">Priority</option>
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+    <input type="date" id="dueDate" required />
+    <button type="submit">Add Task</button>
+  </form>
+
+  <div id="search">
+    <input type="text" id="searchBar" placeholder="Search tasks..." />
+  </div>
+
+  <div id="filters">
+    <label for="filterCategory">Filter by category:</label>
+    <select id="filterCategory">
+      <option value="all">All</option>
+      <option value="work">Work</option>
+      <option value="personal">Personal</option>
+    </select>
+  </div>
+
+  <div id="taskContainer"></div>
+
+  <div id="toast" class="toast">Task saved!</div>
+
+  <script>
+    const form = document.getElementById("taskForm");
+    const taskContainer = document.getElementById("taskContainer");
+    const filter = document.getElementById("filterCategory");
+    const searchBar = document.getElementById("searchBar");
+    const toast = document.getElementById("toast");
+
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    let editIndex = null;
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.style.display = "block";
+      setTimeout(() => toast.style.display = "none", 2000);
+    }
+
+    function renderTasks(filterValue = "all") {
+      const keyword = searchBar.value.toLowerCase();
+      const sortedTasks = [...tasks].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      taskContainer.innerHTML = "";
+
+      sortedTasks.forEach((task, index) => {
+        if (filterValue !== "all" && task.category !== filterValue) return;
+        if (!task.name.toLowerCase().includes(keyword)) return;
+
+        const div = document.createElement("div");
+        div.className = "task" + (task.completed ? " completed" : "");
+
+        div.innerHTML = `
+          <span>
+            <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleComplete(${index})" />
+            ${task.name}
+            <span class="tag ${task.category}">${task.category}</span>
+            <span class="tag ${task.priority}">${task.priority}</span>
+            <span class="tag due">Due: ${task.dueDate}</span>
+          </span>
+          <span>
+            <button onclick="editTask(${index})">✏️</button>
+            <button onclick="deleteTask(${index})">🗑️</button>
+          </span>
+        `;
+
+        taskContainer.appendChild(div);
+      });
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("taskName").value.trim();
+      const category = document.getElementById("category").value;
+      const priority = document.getElementById("priority").value;
+      const dueDate = document.getElementById("dueDate").value;
+
+      if (!name || !category || !priority || !dueDate) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      if (editIndex !== null) {
+        tasks[editIndex] = { name, category, priority, dueDate, completed: tasks[editIndex].completed };
+        showToast("✏️ Task updated!");
+        editIndex = null;
+      } else {
+        tasks.push({ name, category, priority, dueDate, completed: false });
+        showToast("✅ Task added successfully!");
+      }
+
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+      form.reset();
+      renderTasks(filter.value);
+    });
+
+    function toggleComplete(index) {
+      tasks[index].completed = !tasks[index].completed;
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+      renderTasks(filter.value);
+    }
+
+    function deleteTask(index) {
+      tasks.splice(index, 1);
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+      renderTasks(filter.value);
+      showToast("🗑️ Task deleted!");
+    }
+
+    function editTask(index) {
+      const task = tasks[index];
+      document.getElementById("taskName").value = task.name;
+      document.getElementById("category").value = task.category;
+      document.getElementById("priority").value = task.priority;
+      document.getElementById("dueDate").value = task.dueDate;
+      editIndex = index;
+    }
+
+    filter.addEventListener("change", () => renderTasks(filter.value));
+    searchBar.addEventListener("input", () => renderTasks(filter.value));
+
+    renderTasks();
+  </script>
+</body>
+</html>
