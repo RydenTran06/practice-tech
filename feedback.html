@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simple Feedback Form</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 400px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <form id="feedbackForm">
+    <label for="nameInput">Name:</label>
+    <input type="text" id="nameInput" />
+
+    <label for="feedbackInput">Feedback:</label>
+    <textarea id="feedbackInput"></textarea>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    document.getElementById("feedbackForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const name = document.getElementById("nameInput").value;
+      const feedback = document.getElementById("feedbackInput").value;
+      alert(`Name: ${name}\nFeedback: ${feedback}`);
+    });
+  </script>
+</body>
+</html>
